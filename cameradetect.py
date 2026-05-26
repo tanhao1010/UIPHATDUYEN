@@ -48,9 +48,10 @@ FACE_REC_AVAILABLE = False
 try:
     import face_recognition
     FACE_REC_AVAILABLE = True
-    print("[SYSTEM] face_recognition library imported successfully.")
-except ImportError:
-    print("[SYSTEM] face_recognition library not found. Face ID will run in simulation mode.")
+    print(f"[SYSTEM] face_recognition library imported from: {face_recognition.__file__}")
+except Exception as _e:
+    print(f"[SYSTEM] face_recognition import FAILED ({type(_e).__name__}): {_e}")
+    print("[SYSTEM] Face ID will run in simulation mode.")
 
 SERIAL_AVAILABLE = False
 try:
