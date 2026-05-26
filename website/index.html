@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GuardShield AI™ - Hệ thống Giám sát An ninh</title>
+  
+  <!-- High-fidelity Google Fonts (Vietnamese Optimized) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@500;600;700;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css?v=3.0">
+</head>
+
+<body>
+
+  <!-- Màn hình Đăng nhập -->
+  <div id="login-view" class="view active">
+    <div class="login-box fade-up">
+      <div class="login-header">
+        <div class="login-logo">
+          <!-- HCMUTE Logo -->
+          <img src="Logo-hcmute.png" alt="HCMUTE Logo">
+        </div>
+        <h2>GUARDSHIELD AI™</h2>
+        <p>Hệ thống Giám sát An ninh Thông minh</p>
+      </div>
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input type="text" id="username" placeholder="Nhập username" value="admin">
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" id="password" placeholder="Nhập password" value="123456">
+      </div>
+      <button class="btn-primary" onclick="app.login()">KÍCH HOẠT HỆ THỐNG</button>
+      <p style="margin-top: 20px; font-size: 11px; color: var(--text-3);">Copyright 2026 © GuardShield Security AI</p>
+    </div>
+  </div>
+
+  <!-- Bố cục chính của App -->
+  <div id="main-layout" class="view">
+    <div class="ambient ambient-1"></div>
+    <div class="ambient ambient-2"></div>
+
+    <nav class="topnav">
+      <div class="nav-brand">
+        <div class="nav-logo-wrap">
+          <!-- HCMUTE Topnav Logo -->
+          <img src="Logo-hcmute.png" alt="HCMUTE Logo">
+        </div>
+        <span class="nav-title">GUARDSHIELD <span>AI</span></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <!-- Sleek Theme Toggle Switcher Button -->
+        <div class="theme-switch-btn" onclick="app.toggleTheme()"
+          style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); transition: all 0.2s;"
+          title="Chuyển đổi giao diện sáng/tối">
+          <!-- Sun icon (shown in dark mode) -->
+          <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"
+            style="width:16px;height:16px;">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <!-- Moon icon (shown in light mode) -->
+          <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"
+            style="width:16px;height:16px; display:none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </div>
+        <!-- Sleek Security Key (Change Password / Settings) Button -->
+        <div class="theme-switch-btn" onclick="app.navigate('settings')"
+          style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); transition: all 0.2s;"
+          title="Cấu hình an ninh & đổi mật khẩu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="width:16px;height:16px;">
+            <path
+              d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+          </svg>
+        </div>
+        <!-- Sleek Power Logout Button -->
+        <div class="theme-switch-btn" onclick="app.logout()"
+          style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.04); border: 1px solid var(--red); transition: all 0.2s; box-shadow: 0 0 10px rgba(255, 51, 102, 0.05);"
+          title="Đăng xuất khỏi hệ thống">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" style="width:14px;height:14px;">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+          </svg>
+        </div>
+        <!-- Small Pulse Connection Indicator Dot -->
+        <div class="nav-status" style="border: none; background: transparent; padding: 0; margin-left: 2px;">
+          <div class="status-dot" id="system-status-dot" style="margin: 0; width: 8px; height: 8px;"></div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- TRANG CHỦ / SURVEILLANCE DASHBOARD -->
+    <div id="dashboard" class="page active">
+      <div class="hero fade-up">
+        <div class="hero-eyebrow">🛡️ HỆ THỐNG GIÁM SÁT AN NINH</div>
+        <div class="hero-title">Bảng điều khiển<br><em></em></div>
+      </div>
+
+      <!-- Live Video Viewfinder Card -->
+      <div class="video-container fade-up delay-1">
+        <div class="video-header">
+          <div class="video-badge">
+            <span class="live-dot"></span>
+            <span id="camera-mode-badge">CAMERA LIVE STREAM</span>
+          </div>
+          <div class="video-fps" id="live-fps">AI FPS: 0.0</div>
+        </div>
+        <div class="video-viewfinder">
+          <!-- High-tech crosshairs overlay -->
+          <div class="camera-reticle"></div>
+          <div class="camera-corners"></div>
+          <img id="video-stream" src="/video_feed" alt="Camera Feed"
+            onerror="this.src='https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=640&auto=format&fit=crop'">
+
+          <!-- Simulated status text if camera goes offline -->
+          <div class="camera-offline-overlay" id="camera-offline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"
+              style="width:48px;height:48px;margin-bottom:10px;">
+              <line x1="1" y1="1" x2="23" y2="23" />
+              <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34" />
+            </svg>
+            <span>MẤT KẾT NỐI CAMERA</span>
+          </div>
+        </div>
+        <div class="video-footer">
+
+        </div>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="clock-strip fade-up delay-2"
+        style="display: flex; justify-content: space-between; align-items: center; text-align: center;">
+        <div style="flex: 1; text-align: left;">
+          <div class="clock-label">TRẠNG THÁI GIÁM SÁT</div>
+          <div class="clock-time" id="home-arm-status" style="color: var(--green); font-size: 20px;">SYSTEM SAFE</div>
+        </div>
+        <div
+          style="flex: 1; text-align: center; border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0 10px;">
+          <div class="clock-label">CÒI BÁO ĐỘNG</div>
+          <div id="home-buzzer-status"
+            style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text-3); transition: all 0.2s;">
+            YÊN LẶNG</div>
+        </div>
+        <div style="flex: 1; text-align: right; padding-left: 10px;">
+          <div class="clock-label">Nhiệt độ CPU Pi 5</div>
+          <div id="home-cpu-temp"
+            style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text-1)">--.-°C</div>
+        </div>
+      </div>
+
+
+      <!-- Main Action Controls Section -->
+      <div class="section-header fade-up delay-3">
+        <span class="section-title">Hành động Khẩn cấp</span>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="emergency-actions-grid fade-up delay-3">
+        <button class="btn-emergency btn-panic" onclick="app.triggerPanic()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            style="width:24px;height:24px;margin-bottom:6px;">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          BÁO ĐỘNG KHẨN CẤP
+        </button>
+        <button class="btn-emergency btn-arm-toggle" id="btn-master-arm" onclick="app.toggleMasterArm()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            style="width:24px;height:24px;margin-bottom:6px;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span>KÍCH HOẠT HỆ THỐNG</span>
+        </button>
+      </div>
+
+      <!-- Peripheral Devices Quick Control Section -->
+      <div class="section-header fade-up delay-3" style="margin-top: 20px;">
+        <span class="section-title">Trạng thái 3 Thiết bị</span>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="home-devices-strip fade-up delay-3"
+        style="padding: 0 20px 25px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+        <!-- Home Device 1 -->
+        <div class="home-device-card" id="home-dev-card-1"
+          style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: default; transition: all 0.2s;">
+          <div class="home-dev-icon-wrap" id="home-dev-icon-1"
+            style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.2"
+              style="width:16px;height:16px; transition: all 0.2s;">
+              <path
+                d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+              <line x1="9" y1="18" x2="15" y2="18" />
+            </svg>
+          </div>
+          <div class="home-dev-name" id="home-label-dev-1"
+            style="font-size: 11px; font-weight: 700; color: var(--text-2); text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            Thiết bị 1</div>
+          <div class="home-dev-status" id="home-status-dev-1"
+            style="font-size: 9px; font-weight: 700; color: var(--text-3); transition: all 0.2s;">ĐANG TẮT</div>
+        </div>
+
+        <!-- Home Device 2 -->
+        <div class="home-device-card" id="home-dev-card-2"
+          style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: default; transition: all 0.2s;">
+          <div class="home-dev-icon-wrap" id="home-dev-icon-2"
+            style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.2"
+              style="width:16px;height:16px; transition: all 0.2s;">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <div class="home-dev-name" id="home-label-dev-2"
+            style="font-size: 11px; font-weight: 700; color: var(--text-2); text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            Thiết bị 2</div>
+          <div class="home-dev-status" id="home-status-dev-2"
+            style="font-size: 9px; font-weight: 700; color: var(--text-3); transition: all 0.2s;">ĐANG TẮT</div>
+        </div>
+
+        <!-- Home Device 3 -->
+        <div class="home-device-card" id="home-dev-card-3"
+          style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: default; transition: all 0.2s;">
+          <div class="home-dev-icon-wrap" id="home-dev-icon-3"
+            style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2.2"
+              style="width:16px;height:16px; transition: all 0.2s;">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <div class="home-dev-name" id="home-label-dev-3"
+            style="font-size: 11px; font-weight: 700; color: var(--text-2); text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            Thiết bị 3</div>
+          <div class="home-dev-status" id="home-status-dev-3"
+            style="font-size: 9px; font-weight: 700; color: var(--text-3); transition: all 0.2s;">ĐANG TẮT</div>
+        </div>
+      </div>
+
+      <!-- Real-time CPU Temperature Chart (moved to bottom) -->
+      <div class="video-container fade-up delay-2"
+        style="margin-top: 10px; margin-bottom: 25px; padding: 14px 16px; align-self: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div
+            style="font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;">
+            📈 BIỂU ĐỒ NHIỆT ĐỘ CPU PI 5 (°C)</div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-3);"
+            id="chart-max-temp">Range: --.-°C</div>
+        </div>
+        <canvas id="cpu-temp-chart" style="width: 100%; height: 80px; display: block;"></canvas>
+      </div>
+
+    </div>
+
+    <!-- THIẾT BỊ SMART (SMART DEVICES & ALERTS) -->
+    <div id="devices" class="page">
+      <div class="subpage-header">
+        <div class="back-btn" onclick="app.navigate('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </div>
+        <div class="subpage-title">⚙️ Điều khiển Thiết bị & Báo động</div>
+      </div>
+
+      <div class="subpage-content">
+        <!-- Alarm Modes Section -->
+        <div class="section-header">
+          <span class="section-title">Cấu hình Cảnh báo Tức thời</span>
+          <div class="section-line"></div>
+        </div>
+
+        <div class="card toggle-card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title">Cảnh báo qua Email</span>
+              <span class="toggle-desc">Tự động chụp ảnh gửi mail khi phát hiện người</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-email-alerts" onchange="app.toggleAlertMode('email', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+            <div class="toggle-info">
+              <span class="toggle-title">Cảnh báo Còi Hú (Buzzer)</span>
+              <span class="toggle-desc">Kích hoạt còi báo động vật lý trên Raspberry Pi 5</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-buzzer-alerts" onchange="app.toggleAlertMode('buzzer', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+            <div class="toggle-info">
+              <span class="toggle-title">Cảnh báo qua SMS GSM (A7680C)</span>
+              <span class="toggle-desc">Tự động gửi tin nhắn SMS khẩn cấp qua module SIM 4G</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-sms-alerts" onchange="app.toggleAlertMode('sms', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+            <div class="toggle-info">
+              <span class="toggle-title">Cuộc gọi Báo động GSM (A7680C)</span>
+              <span class="toggle-desc">Gọi điện cảnh báo đến số điện thoại di động cấu hình</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-call-alerts" onchange="app.toggleAlertMode('call', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3 External Devices Control -->
+        <div class="section-header">
+          <span class="section-title">Điều khiển 3 thiết bị ngoại vi</span>
+          <div class="section-line"></div>
+        </div>
+
+        <div class="devices-grid">
+          <!-- Device 1 -->
+          <div class="device-card" id="device-card-1">
+            <div class="dev-header">
+              <div class="dev-icon-wrap" style="--dev-color: var(--blue);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round">
+                  <path
+                    d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                  <line x1="9" y1="18" x2="15" y2="18" />
+                  <line x1="10" y1="22" x2="14" y2="22" />
+                </svg>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-dev-1" onchange="app.controlDevice(1, this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="dev-name" id="label-dev-1">Thiết bị 1</div>
+            <div class="dev-status-text" id="status-dev-1">ĐANG TẮT</div>
+          </div>
+
+          <!-- Device 2 -->
+          <div class="device-card" id="device-card-2">
+            <div class="dev-header">
+              <div class="dev-icon-wrap" style="--dev-color: var(--purple);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-dev-2" onchange="app.controlDevice(2, this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="dev-name" id="label-dev-2">Thiết bị 2</div>
+            <div class="dev-status-text" id="status-dev-2">ĐANG TẮT</div>
+          </div>
+
+          <!-- Device 3 -->
+          <div class="device-card" id="device-card-3">
+            <div class="dev-header">
+              <div class="dev-icon-wrap" style="--dev-color: var(--green);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round">
+                  <path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93" />
+                </svg>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-dev-3" onchange="app.controlDevice(3, this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="dev-name" id="label-dev-3">Thiết bị 3</div>
+            <div class="dev-status-text" id="status-dev-3">ĐANG TẮT</div>
+          </div>
+        </div>
+
+        <!-- Buzzer Control Switch -->
+        <div class="card toggle-card" style="margin-top: 15px;">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-title" style="color: var(--red);">Kích hoạt Còi Cảnh báo khẩn cấp</span>
+              <span class="toggle-desc">Nhấp để bật hoặc ngắt còi báo động trực tiếp</span>
+            </div>
+            <label class="switch switch-alarm">
+              <input type="checkbox" id="switch-buzzer" onchange="app.controlDevice('buzzer', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NHẬT KÝ SỰ KIỆN (EVENT LOGS) -->
+    <div id="logs" class="page">
+      <div class="subpage-header">
+        <div class="back-btn" onclick="app.navigate('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </div>
+        <div class="subpage-title">📋 Nhật ký Sự kiện An ninh</div>
+      </div>
+
+      <div class="subpage-content" style="padding: 15px 15px;">
+        <div class="log-panel-header">
+          <span>NHẬT KÝ SỰ KIỆN CAMERA AI (GẦN NHẤT)</span>
+          <button class="btn-clear-logs" onclick="app.loadLogs()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+            Làm mới
+          </button>
+        </div>
+
+        <div class="log-list-wrapper" id="event-logs-list">
+          <div class="log-empty-state">Đang tải nhật ký sự kiện...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ĐỒ ÁN TỐT NGHIỆP -->
+    <div id="thesis" class="page">
+      <div class="subpage-header">
+        <div class="back-btn" onclick="app.navigate('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </div>
+        <div class="subpage-title">🎓 Đề tài Đồ án Tốt nghiệp</div>
+      </div>
+
+      <div class="subpage-content">
+        <!-- University Header Banner -->
+        <div class="thesis-univ-header card fade-up">
+          <div class="thesis-badge-large">
+            <img src="Logo-hcmute.png" alt="HCMUTE Logo">
+          </div>
+          <div class="thesis-school-name">TRƯỜNG ĐẠI HỌC SƯ PHẠM KỸ THUẬT TP.HCM</div>
+          <div class="thesis-faculty">KHOA ĐIỆN - ĐIỆN TỬ</div>
+        </div>
+
+        <!-- Thesis Title Card -->
+        <div class="thesis-main-card fade-up delay-1">
+          <div class="thesis-topic-tag">ĐỒ ÁN TỐT NGHIỆP</div>
+          <h2 class="thesis-title">
+            THIẾT KẾ VÀ THI CÔNG HỆ THỐNG GIÁM SÁT AN NINH CHỐNG TRỘM VÀ PHÁT HIỆN TÉ NGÃ SỬ DỤNG CAMERA, GỬI CẢNH BÁO
+
+          </h2>
+
+          <div class="thesis-people-grid">
+            <div class="thesis-person-item">
+              <div class="thesis-person-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  style="width:16px;height:16px;">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div class="thesis-person-details">
+                <span class="thesis-person-label">Sinh viên thực hiện</span>
+                <span class="thesis-person-value">Phạm Phát Duyên</span>
+              </div>
+            </div>
+
+            <div class="thesis-person-item">
+              <div class="thesis-person-icon"
+                style="color:var(--purple); background:var(--purple-dim); border-color:rgba(191,85,236,0.2);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  style="width:16px;height:16px;">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5" />
+                </svg>
+              </div>
+              <div class="thesis-person-details">
+                <span class="thesis-person-label">Giảng viên hướng dẫn</span>
+                <span class="thesis-person-value">TS. VÕ ĐỨC DŨNG </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features Overview Section -->
+        <h3 class="thesis-features-title fade-up delay-2">🌟 CÁC PHÂN HỆ TÍNH NĂNG ĐỒ ÁN</h3>
+
+        <!-- Feature 1: Live Stream and AI Person Detection -->
+        <div class="thesis-feature-card fade-up delay-2">
+          <div class="thesis-feature-icon"
+            style="background:var(--accent-dim); border:1px solid rgba(0,242,254,0.3); color:var(--accent);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </div>
+          <div class="thesis-feature-info">
+            <h4>Giám sát & Nhận diện người AI</h4>
+            <p>Truyền hình ảnh livestream trên giao diện Web. Tích hợp nhận diện người đột nhập 24/7 thời gian thực.</p>
+          </div>
+        </div>
+
+        <!-- Feature 2: Fall Detection -->
+        <div class="thesis-feature-card fade-up delay-3">
+          <div class="thesis-feature-icon"
+            style="background:var(--red-dim); border:1px solid rgba(255,51,102,0.3); color:var(--red);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+          </div>
+          <div class="thesis-feature-info">
+            <h4>Phát hiện té ngã (Fall Detection)</h4>
+            <p>Sử dụng camera phân tích tư thế cơ thể bằng mô hình học máy để phát hiện tai nạn té ngã (đặc biệt hữu ích
+              cho người cao tuổi, bệnh nhân).</p>
+          </div>
+        </div>
+
+
+        <!-- Feature 4: GSM Module Backup -->
+        <div class="thesis-feature-card fade-up delay-3">
+          <div class="thesis-feature-icon"
+            style="background:var(--yellow-dim); border:1px solid rgba(255,159,67,0.3); color:var(--yellow);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <line x1="12" y1="18" x2="12.01" y2="18" />
+            </svg>
+          </div>
+          <div class="thesis-feature-info">
+            <h4>Module GSM (SMS & Gọi khẩn cấp)</h4>
+            <p>Trang bị module SIM GSM phần cứng kết nối qua GPIO Pi 5. Tự động gửi SMS cảnh báo hoặc gọi điện thoại
+              trực tiếp khi phát hiện xâm nhập/té ngã kể cả khi nhà bị cắt Internet.</p>
+          </div>
+        </div>
+
+        <!-- Feature 5: Peripheral Control -->
+        <div class="thesis-feature-card fade-up delay-3">
+          <div class="thesis-feature-icon"
+            style="background:var(--green-dim); border:1px solid rgba(0,230,118,0.3); color:var(--green);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+            </svg>
+          </div>
+          <div class="thesis-feature-info">
+            <h4>Điều khiển Thiết bị & Còi báo động</h4>
+            <p>Điều khiển an toàn 3 rơ-le thiết bị ngoại vi vật lý (đèn cổng, khóa cửa điện, quạt hút) và kích hoạt còi
+              hú Siren 220V báo động tức thời tại thực địa.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CÀI ĐẶT HỆ THỐNG -->
+    <div id="settings" class="page">
+      <div class="subpage-header">
+        <div class="back-btn" onclick="app.navigate('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </div>
+        <div class="subpage-title">⚙️ Cấu hình Hệ thống & Báo động</div>
+      </div>
+
+      <div class="settings-container fade-up">
+        <!-- Left Sidebar Tabbar -->
+        <div class="settings-sidebar">
+          <div class="settings-tab-btn active" data-settings-tab="mail" onclick="app.switchSettingsTab('mail')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:15px;height:15px;">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            <span>Cấu hình Mail</span>
+          </div>
+
+          <div class="settings-tab-btn" data-settings-tab="gsm" onclick="app.switchSettingsTab('gsm')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:15px;height:15px;">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <line x1="12" y1="18" x2="12.01" y2="18" />
+              <path d="M9 6h6v4H9z" />
+            </svg>
+            <span>Module GSM SIM</span>
+          </div>
+
+          <div class="settings-tab-btn" data-settings-tab="faceid" onclick="app.switchSettingsTab('faceid')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:15px;height:15px;">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            <span>Nhận diện & Thành viên</span>
+          </div>
+
+          <div class="settings-tab-btn" data-settings-tab="ai" onclick="app.switchSettingsTab('ai')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:15px;height:15px;">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span>Thông số AI</span>
+          </div>
+
+          <div class="settings-tab-btn" data-settings-tab="devices" onclick="app.switchSettingsTab('devices')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:15px;height:15px;">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" />
+              <line x1="6" y1="18" x2="6.01" y2="18" />
+            </svg>
+            <span>Tên Thiết bị</span>
+          </div>
+
+          <div class="settings-tab-btn" data-settings-tab="account" onclick="app.switchSettingsTab('account')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:15px;height:15px;">
+              <path
+                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+            <span>Tài khoản Web</span>
+          </div>
+        </div>
+
+        <!-- Mobile Dropdown Selector (Active only on Mobile) -->
+        <div class="settings-mobile-menu-trigger" onclick="app.toggleSettingsMenu()">
+          <span id="active-settings-tab-name">📧 Cấu hình Mail</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            style="width:16px;height:16px; transition: transform 0.2s;" id="settings-menu-arrow">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+
+        <!-- Mobile Dropdown Menu List -->
+        <div class="settings-mobile-menu-list" id="settings-mobile-menu-list">
+          <div class="settings-mobile-menu-item active"
+            onclick="app.selectMobileSettingsTab('mail', '📧 Cấu hình Mail')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:14px;height:14px;">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            <span>Cấu hình Mail</span>
+          </div>
+          <div class="settings-mobile-menu-item" onclick="app.selectMobileSettingsTab('gsm', '📱 Module GSM SIM')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px;height:14px;">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <line x1="12" y1="18" x2="12.01" y2="18" />
+            </svg>
+            <span>Module GSM SIM</span>
+          </div>
+          <div class="settings-mobile-menu-item" onclick="app.selectMobileSettingsTab('faceid', '👤 Nhận diện & Thành viên')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px;height:14px;">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            <span>Nhận diện & Thành viên</span>
+          </div>
+          <div class="settings-mobile-menu-item" onclick="app.selectMobileSettingsTab('ai', '🧠 Thông số AI')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:14px;height:14px;">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span>Thông số AI</span>
+          </div>
+          <div class="settings-mobile-menu-item" onclick="app.selectMobileSettingsTab('devices', '🔧 Tên Thiết bị')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:14px;height:14px;">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" />
+              <line x1="6" y1="18" x2="6.01" y2="18" />
+            </svg>
+            <span>Tên Thiết bị</span>
+          </div>
+          <div class="settings-mobile-menu-item" onclick="app.selectMobileSettingsTab('account', '🔒 Tài khoản Web')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              style="width:14px;height:14px;">
+              <path
+                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+            <span>Tài khoản Web</span>
+          </div>
+        </div>
+
+        <!-- Right Content Panels -->
+        <div class="settings-panels">
+
+          <!-- Tab 1: Cấu hình Mail -->
+          <div class="settings-panel active" id="settings-panel-mail">
+            <div class="card" style="margin-bottom: 0;">
+              <h3 class="card-section-title">📧 CẤU HÌNH GỬI EMAIL CẢNH BÁO</h3>
+              <div class="form-group">
+                <label>Gmail Người gửi (Sender Email)</label>
+                <input type="email" id="sender_email" placeholder="VD: phatduyen17@gmail.com">
+              </div>
+              <div class="form-group">
+                <label>Mật khẩu ứng dụng Gmail (App Password)</label>
+                <input type="password" id="app_password" placeholder="Mật khẩu 16 chữ số được Google cấp">
+              </div>
+              <div class="form-group">
+                <label>Email Người nhận (Receiver Email)</label>
+                <input type="email" id="receiver_email" placeholder="VD: receiver@gmail.com">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 1b: Cấu hình GSM SIM A7680C -->
+          <div class="settings-panel" id="settings-panel-gsm">
+            <div class="card" style="margin-bottom: 0;">
+              <h3 class="card-section-title">📱 CẤU HÌNH MODULE GSM SIM A7680C</h3>
+              
+              <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <label class="switch-row" style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;">
+                  <input type="checkbox" id="sms_alerts_enabled" style="width: auto; margin: 0;">
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-1);">Gửi SMS Cảnh báo</span>
+                </label>
+                <label class="switch-row" style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;">
+                  <input type="checkbox" id="call_alerts_enabled" style="width: auto; margin: 0;">
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-1);">Gọi điện Báo động</span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label>Số điện thoại nhận cuộc gọi/SMS khẩn cấp</label>
+                <input type="text" id="alert_phone_number" placeholder="VD: 0901234567">
+              </div>
+
+              <div class="form-group">
+                <label>Nội dung SMS cảnh báo (Gợi ý viết không dấu)</label>
+                <textarea id="sms_message_template" rows="3" style="width:100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); color: var(--text-1); font-family: inherit; font-size: 13px;" placeholder="VD: GuardShield AI Canh bao: Phat hien co nguoi xam nhap trai phep vao luc {time}!"></textarea>
+                <p style="font-size: 11px; color: var(--text-3); margin-top: 4px;">Ký tự <code>{time}</code> sẽ tự động được thay thế bằng ngày giờ phát hiện đột nhập.</p>
+              </div>
+
+              <div class="form-group" style="display: flex; gap: 10px;">
+                <div style="flex: 2;">
+                  <label>Cổng Serial SIM A7680C</label>
+                  <input type="text" id="sim_port" placeholder="VD: /dev/ttyS0 hoặc COM3">
+                </div>
+                <div style="flex: 1;">
+                  <label>Baudrate</label>
+                  <input type="number" id="sim_baudrate" placeholder="115200">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 1c: Quản lý khuôn mặt & Thành viên -->
+          <div class="settings-panel" id="settings-panel-faceid">
+            <div class="card" style="margin-bottom: 0;">
+              <h3 class="card-section-title">👤 QUẢN LÝ THÀNH VIÊN TRONG GIA ĐÌNH</h3>
+              
+              <!-- Toggles for Recognition -->
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border);">
+                <label class="switch-row" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="face_recognition_enabled" style="width: auto; margin: 0;">
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-1);">Kích hoạt quét Face ID nhận diện người nhà</span>
+                </label>
+                <label class="switch-row" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="ignore_alerts_for_family" style="width: auto; margin: 0;">
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-1);">KHÔNG kích hoạt còi/SMS/Email khi là Người nhà</span>
+                </label>
+                <label class="switch-row" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="alarm_on_undetected_faces" style="width: auto; margin: 0;">
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-1);">Báo động khi người bị che khuất/không nhận diện được mặt</span>
+                </label>
+              </div>
+
+              <!-- Face distance tolerance threshold slider -->
+              <div class="form-group" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <label>Ngưỡng tin cậy khớp khuôn mặt (Face Distance)</label>
+                  <span id="face-tolerance-val" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--accent);">0.60</span>
+                </div>
+                <input type="range" id="face_distance_tolerance" min="0.1" max="1.0" step="0.05" oninput="document.getElementById('face-tolerance-val').innerText = parseFloat(this.value).toFixed(2)" style="width: 100%; accent-color: var(--accent);">
+                <p style="font-size: 11px; color: var(--text-3); margin-top: 4px;">Ngưỡng so khớp ảnh. Chỉ số càng thấp thì nhận diện càng khắt khe (tránh nhận nhầm người), chỉ số cao dễ nhận diện hơn nhưng có khả năng nhầm lẫn.</p>
+              </div>
+
+              <!-- Form to Register a New Face -->
+              <div class="face-register-box" style="padding: 15px; border-radius: 12px; background: rgba(0, 242, 254, 0.03); border: 1px dashed rgba(0, 242, 254, 0.3); margin-bottom: 20px;">
+                <h4 style="font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 10px; text-transform: uppercase;">Đăng ký khuôn mặt người nhà mới</h4>
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label>Họ và tên thành viên (Viết không dấu tốt nhất)</label>
+                  <input type="text" id="new-face-name" placeholder="VD: Pham Phat Duyen, Hao Nguyen">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label>Chọn ảnh khuôn mặt (Ảnh rõ nét chân dung)</label>
+                  <input type="file" id="new-face-file" accept="image/*" style="font-size: 11px; border: none; padding: 0; background: transparent; width: 100%;">
+                </div>
+                <button type="button" class="btn-primary" onclick="app.uploadFace()" style="font-size: 12px; padding: 8px 16px; width: auto; background: var(--accent); color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer;">ĐĂNG KÝ GƯƠNG MẶT</button>
+              </div>
+
+              <!-- Registered faces list -->
+              <h4 style="font-size: 12px; font-weight: 700; color: var(--text-1); margin-bottom: 8px; text-transform: uppercase;">Danh sách thành viên nhận diện (Face ID)</h4>
+              <div id="registered-faces-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 5px; border: 1px solid var(--border); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.1);">
+                <div style="font-size: 11px; color: var(--text-3); text-align: center; padding: 10px;">Đang tải danh sách thành viên...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Thông số AI -->
+          <div class="settings-panel" id="settings-panel-ai">
+            <div class="card" style="margin-bottom: 0;">
+              <h3 class="card-section-title">🧠 CÀI ĐẶT THÔNG SỐ NHẬN DIỆN AI</h3>
+              <div class="form-group">
+                <label>Độ nhạy YOLO Confidence (0.1 - 1.0)</label>
+                <input type="number" id="confidence" step="0.05" min="0.10" max="1.00">
+                <p style="font-size: 11px; color: var(--text-3); margin-top: 4px;">Ngưỡng tin cậy của thuật toán YOLOv8.
+                  Mặc định: 0.45. Càng cao càng ít báo động giả nhưng có thể bỏ sót người.</p>
+              </div>
+              <div class="form-group">
+                <label>Thời gian trễ gửi cảnh báo Email (giây)</label>
+                <input type="number" id="cooldown_seconds" min="5" max="3600">
+                <p style="font-size: 11px; color: var(--text-3); margin-top: 4px;">Thời gian tối thiểu giãn cách giữa
+                  hai email gửi đi để tránh spam. Mặc định: 30.0s.</p>
+              </div>
+              <div class="form-group">
+                <label>Thời gian nhận diện người ổn định (giây)</label>
+                <input type="number" id="stable_seconds" min="0.5" max="10" step="0.5">
+                <p style="font-size: 11px; color: var(--text-3); margin-top: 4px;">Người xuất hiện ổn định trong khoảng
+                  thời gian này mới kích hoạt báo động. Mặc định: 2.0s.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Tên Thiết bị -->
+          <div class="settings-panel" id="settings-panel-devices">
+            <div class="card" style="margin-bottom: 0;">
+              <h3 class="card-section-title">🔧 ĐẶT TÊN CÁC THIẾT BỊ NGOẠI VI</h3>
+              <div class="form-group">
+                <label>Tên Thiết bị 1</label>
+                <input type="text" id="device_1_name" placeholder="VD: Đèn Sân Vườn">
+              </div>
+              <div class="form-group">
+                <label>Tên Thiết bị 2</label>
+                <input type="text" id="device_2_name" placeholder="VD: Khóa Cửa Cổng">
+              </div>
+              <div class="form-group">
+                <label>Tên Thiết bị 3</label>
+                <input type="text" id="device_3_name" placeholder="VD: Quạt Thông Gió">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 4: Tài khoản Web -->
+          <div class="settings-panel" id="settings-panel-account">
+            <div class="card" style="margin-bottom: 0;">
+              <h3 class="card-section-title">🔒 TÀI KHOẢN ĐĂNG NHẬP WEBSITE</h3>
+              <div class="form-group">
+                <label>Tên đăng nhập mới (Username)</label>
+                <input type="text" id="web_username" placeholder="VD: admin">
+              </div>
+              <div class="form-group">
+                <label>Mật khẩu mới (Password)</label>
+                <input type="password" id="web_password" placeholder="VD: 123456">
+              </div>
+            </div>
+          </div>
+
+          <!-- Common Save Actions -->
+          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-primary" onclick="app.saveSettings()">LƯU CẤU HÌNH LÊN RASPBERRY PI 5</button>
+            <button class="btn-primary" onclick="app.logout()"
+              style="background: var(--red-dim); color: var(--red); box-shadow: none;">ĐĂNG XUẤT HỆ THỐNG</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <div class="bnav-item active" data-target="dashboard" onclick="app.navigate('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Trang chủ</span>
+      </div>
+      <div class="bnav-item" data-target="devices" onclick="app.navigate('devices')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+          <line x1="6" y1="6" x2="6.01" y2="6" />
+          <line x1="6" y1="18" x2="6.01" y2="18" />
+        </svg>
+        <span>Thiết bị</span>
+      </div>
+      <div class="bnav-item" data-target="thesis" onclick="app.navigate('thesis')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+          <path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5" />
+        </svg>
+        <span>Đồ án</span>
+      </div>
+      <div class="bnav-item" data-target="logs" onclick="app.navigate('logs')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+        <span>Nhật ký</span>
+      </div>
+      <div class="bnav-item" data-target="settings" onclick="app.navigate('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        <span>Cài đặt</span>
+      </div>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+</body>
+<script src="app.js?v=3.0"></script>
+
+</html>
