@@ -599,9 +599,9 @@ Chi tiết hình ảnh camera ghi nhận được gửi kèm trong thư này."""
 class CameraDetector:
     # Tuning constants for the 2-stage YOLO -> Face Recognition pipeline on Pi 5
     TRACK_IOU_THRESHOLD = 0.3       # min IoU to consider boxes the same track
-    TRACK_STALE_SECONDS = 5.0       # forget tracks not seen for this long
-    FACE_CACHE_VALIDITY = 10.0      # keep using cached label up to this many seconds
-    FACE_REVERIFY_INTERVAL = 5.0    # re-run face recog on a known track this often
+    TRACK_STALE_SECONDS = 30.0      # forget tracks not seen for this long (out-of-frame tolerance)
+    FACE_CACHE_VALIDITY = 60.0      # cache lives as long as the track does (effectively unlimited)
+    FACE_REVERIFY_INTERVAL = 8.0    # only re-verify uncertain results (stranger/no_face), never family
     FACE_PENDING_TIMEOUT = 3.0      # if pending too long, fall back to stranger (per config)
     FACE_SUBMIT_COOLDOWN = 1.0      # don't spam the worker queue for the same track
 
@@ -1022,12 +1022,16 @@ class CameraDetector:
                                 label, box_type, box_color = "Dang nhan dien...", "pending", (0, 165, 255)
 
                         # Stage 3: decide whether to (re-)submit this track to the face worker
+                        # Rule: once a track is confirmed "family", LOCK IT IN — never re-verify.
+                        # Only re-verify uncertain results (stranger / no_face) in case lighting / angle improves.
                         should_submit = False
                         if fr_enabled:
                             if cache_copy is None:
                                 last = self.last_submit.get(track_id, 0.0)
                                 if (now_loop - last) > self.FACE_SUBMIT_COOLDOWN:
                                     should_submit = True
+                            elif cache_copy.get("raw_result") == "family":
+                                should_submit = False  # locked
                             elif (now_loop - cache_copy["timestamp"]) > self.FACE_REVERIFY_INTERVAL:
                                 should_submit = True
 
