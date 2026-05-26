@@ -920,6 +920,46 @@ const app = {
     }
   },
 
+  async captureFace() {
+    const nameInput = document.getElementById('new-face-name');
+    if (!nameInput) return;
+
+    const name = nameInput.value.trim();
+    if (!name) {
+      this.showToast("Vui lòng điền họ và tên thành viên trước khi chụp!");
+      nameInput.focus();
+      return;
+    }
+
+    if (!confirm(`Chuẩn bị chụp ảnh "${name}" từ camera Pi. Đứng thẳng trước camera, đủ ánh sáng, chỉ 1 người trong khung hình. Tiếp tục?`)) {
+      return;
+    }
+
+    this.showToast("📸 Đang chụp từ camera Pi...");
+    try {
+      const response = await fetch('/api/capture_face', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name })
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        this.showToast(`✅ Đã đăng ký ${name} bằng camera Pi!`);
+        nameInput.value = '';
+        const fileInput = document.getElementById('new-face-file');
+        if (fileInput) fileInput.value = '';
+        this.loadKnownFaces();
+        this.pollStatus();
+      } else {
+        this.showToast(result.error || "Chụp khuôn mặt thất bại!");
+      }
+    } catch (e) {
+      this.showToast("Lỗi kết nối tới máy chủ khi chụp!");
+      console.error(e);
+    }
+  },
+
   async deleteFace(name) {
     if (!confirm(`Bạn có chắc chắn muốn xóa thành viên ${name} khỏi danh sách nhận diện?`)) {
       return;

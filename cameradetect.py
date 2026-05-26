@@ -327,10 +327,18 @@ class FaceIDManager:
         return True
 
     def delete_face(self, name):
-        safe_name = re.sub(r'[^a-zA-Z0-9]', '_', name)
-        filename = f"{safe_name}.jpg"
-        filepath = os.path.join(KNOWN_FACES_DIR, filename)
-        if os.path.exists(filepath):
+        # Apply the same name-normalization used at save time so deletion always matches
+        ascii_name = remove_vietnamese_accents(name)
+        safe_name = re.sub(r'[^a-zA-Z0-9]', '_', ascii_name).strip('_')
+        filepath = None
+        # Try multiple extensions in case the file was saved as PNG instead of JPG
+        for ext in ('.jpg', '.jpeg', '.png'):
+            candidate = os.path.join(KNOWN_FACES_DIR, f"{safe_name}{ext}")
+            if os.path.exists(candidate):
+                filepath = candidate
+                break
+
+        if filepath:
             try:
                 os.remove(filepath)
                 print(f"[FACE ID] Deleted face: {name} at {filepath}")
@@ -1365,21 +1373,73 @@ def api_upload_face():
         return jsonify({"success": False, "error": "Tên tệp không hợp lệ!"}), 400
         
     try:
-        # Normalize name for filename
-        safe_name = re.sub(r'[^a-zA-Z0-9]', '_', name)
+        # Normalize name for filename: strip Vietnamese diacritics first, then sanitize
+        ascii_name = remove_vietnamese_accents(name)
+        safe_name = re.sub(r'[^a-zA-Z0-9]', '_', ascii_name).strip('_')
+        if not safe_name:
+            return jsonify({"success": False, "error": "Tên không hợp lệ sau khi chuẩn hoá!"}), 400
         filename = f"{safe_name}.jpg"
         filepath = os.path.join(KNOWN_FACES_DIR, filename)
-        
+
         # Save the file
         file.save(filepath)
-        
+
         # Reload faces
         face_id_manager.load_known_faces()
-        
+
         add_event(f"Thành viên mới '{name}' đăng ký thành công.", "success")
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": f"Lỗi lưu trữ ảnh: {str(e)}"}), 500
+
+@app.route('/api/capture_face', methods=['POST'])
+def api_capture_face():
+    """Register a new face by capturing the current camera frame.
+    More accurate than uploaded photos because lighting/angle/lens match runtime."""
+    data = request.json or {}
+    name = (data.get("name") or "").strip()
+
+    if not name:
+        return jsonify({"success": False, "error": "Tên thành viên không được để trống!"}), 400
+
+    if raw_frame is None:
+        return jsonify({"success": False, "error": "Camera chưa sẵn sàng. Vui lòng đợi vài giây và thử lại."}), 400
+
+    frame = raw_frame.copy()
+
+    # Validate the frame has exactly one detectable face before saving
+    if FACE_REC_AVAILABLE:
+        try:
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            face_locations = face_recognition.face_locations(rgb_frame, model="hog", number_of_times_to_upsample=1)
+        except Exception as e:
+            return jsonify({"success": False, "error": f"Lỗi quét khuôn mặt: {str(e)}"}), 500
+
+        if len(face_locations) == 0:
+            return jsonify({"success": False, "error": "Không thấy khuôn mặt trong khung hình. Hãy đứng thẳng trước camera, đủ ánh sáng và thử lại."}), 400
+        if len(face_locations) > 1:
+            return jsonify({"success": False, "error": f"Phát hiện {len(face_locations)} khuôn mặt. Chỉ chụp 1 người mỗi lần."}), 400
+
+    # Normalize name -> safe filename
+    ascii_name = remove_vietnamese_accents(name)
+    safe_name = re.sub(r'[^a-zA-Z0-9]', '_', ascii_name).strip('_')
+    if not safe_name:
+        return jsonify({"success": False, "error": "Tên không hợp lệ sau khi chuẩn hoá!"}), 400
+
+    filename = f"{safe_name}.jpg"
+    filepath = os.path.join(KNOWN_FACES_DIR, filename)
+
+    try:
+        # JPEG quality 92 to keep facial features sharp for encoding
+        ok = cv2.imwrite(filepath, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 92])
+        if not ok:
+            return jsonify({"success": False, "error": "Không ghi được ảnh ra đĩa."}), 500
+
+        face_id_manager.load_known_faces()
+        add_event(f"📸 Đã đăng ký '{name}' bằng camera Pi.", "success")
+        return jsonify({"success": True, "filename": filename})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Lỗi lưu ảnh: {str(e)}"}), 500
 
 @app.route('/api/delete_face', methods=['POST'])
 def api_delete_face():

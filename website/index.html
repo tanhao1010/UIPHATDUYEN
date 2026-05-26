@@ -806,7 +806,11 @@
                   <label>Chọn ảnh khuôn mặt (Ảnh rõ nét chân dung)</label>
                   <input type="file" id="new-face-file" accept="image/*" style="font-size: 11px; border: none; padding: 0; background: transparent; width: 100%;">
                 </div>
-                <button type="button" class="btn-primary" onclick="app.uploadFace()" style="font-size: 12px; padding: 8px 16px; width: auto; background: var(--accent); color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer;">ĐĂNG KÝ GƯƠNG MẶT</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="btn-primary" onclick="app.uploadFace()" style="font-size: 12px; padding: 8px 16px; background: var(--accent); color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer;">📁 ĐĂNG KÝ TỪ ẢNH</button>
+                  <button type="button" class="btn-primary" onclick="app.captureFace()" style="font-size: 12px; padding: 8px 16px; background: #00f2fe; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer;">📸 CHỤP TỪ CAMERA PI</button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-3); margin-top: 8px;">💡 <b>Chụp từ Camera Pi</b> sẽ chính xác hơn vì cùng điều kiện ánh sáng / góc nhìn với lúc nhận diện. Đứng thẳng trước camera, đủ sáng, chỉ 1 người trong khung hình.</p>
               </div>
 
               <!-- Registered faces list -->
