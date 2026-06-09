@@ -639,6 +639,7 @@ const app = {
           // GSM and Face ID configurations
           'alert_phone_number', 'sms_message_template', 'sim_port', 'sim_baudrate',
           'face_recognition_enabled', 'face_distance_tolerance', 'ignore_alerts_for_family', 'alarm_on_undetected_faces',
+          'fall_detection_enabled', 'fall_stable_seconds', 'fall_box_aspect_ratio',
           'sms_alerts_enabled', 'call_alerts_enabled'
         ];
         
@@ -675,6 +676,7 @@ const app = {
       // GSM and Face ID configurations
       'alert_phone_number', 'sms_message_template', 'sim_port', 'sim_baudrate',
       'face_recognition_enabled', 'face_distance_tolerance', 'ignore_alerts_for_family', 'alarm_on_undetected_faces',
+      'fall_detection_enabled', 'fall_stable_seconds', 'fall_box_aspect_ratio',
       'sms_alerts_enabled', 'call_alerts_enabled'
     ];
     

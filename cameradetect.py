@@ -102,7 +102,10 @@ DEFAULT_CONFIG = {
     "face_recognition_enabled": True,
     "face_distance_tolerance": 0.6,
     "ignore_alerts_for_family": True,
-    "alarm_on_undetected_faces": True
+    "alarm_on_undetected_faces": False,
+    "fall_detection_enabled": True,
+    "fall_stable_seconds": 1.5,
+    "fall_box_aspect_ratio": 1.25
 }
 
 def load_config():
@@ -371,20 +374,23 @@ class FaceIDManager:
             if h < 80 or w < 60:
                 return "no_face"
 
-            # Downscale crop so dlib HOG runs fast on Pi 5 (target height ~160px)
-            TARGET_H = 160
+            # Keep enough detail for the face inside a full-person YOLO crop.
+            TARGET_H = 360
             if h > TARGET_H:
                 scale = TARGET_H / float(h)
                 new_w = max(1, int(w * scale))
                 crop_image = cv2.resize(crop_image, (new_w, TARGET_H), interpolation=cv2.INTER_AREA)
+            elif h < 220:
+                scale = 220 / float(h)
+                new_w = max(1, int(w * scale))
+                crop_image = cv2.resize(crop_image, (new_w, 220), interpolation=cv2.INTER_CUBIC)
 
             rgb_crop = cv2.cvtColor(crop_image, cv2.COLOR_BGR2RGB)
-            # upsample=0: crop is already close-up from YOLO, no need to upsample (2-3x speedup)
-            face_locations = face_recognition.face_locations(rgb_crop, model="hog", number_of_times_to_upsample=0)
+            face_locations = face_recognition.face_locations(rgb_crop, model="hog", number_of_times_to_upsample=1)
             if not face_locations:
                 return "no_face"
 
-            encodings = face_recognition.face_encodings(rgb_crop, face_locations, num_jitters=1)
+            encodings = face_recognition.face_encodings(rgb_crop, face_locations, num_jitters=2)
             if not encodings:
                 return "no_face"
 
@@ -602,8 +608,8 @@ class CameraDetector:
     TRACK_STALE_SECONDS = 30.0      # forget tracks not seen for this long (out-of-frame tolerance)
     FACE_CACHE_VALIDITY = 60.0      # cache lives as long as the track does (effectively unlimited)
     FACE_REVERIFY_INTERVAL = 8.0    # only re-verify uncertain results (stranger/no_face), never family
-    FACE_PENDING_TIMEOUT = 3.0      # if pending too long, fall back to stranger (per config)
-    FACE_SUBMIT_COOLDOWN = 1.0      # don't spam the worker queue for the same track
+    FACE_PENDING_TIMEOUT = 6.0      # give Face ID more time before treating the person as unknown
+    FACE_SUBMIT_COOLDOWN = 0.7      # don't spam the worker queue for the same track
 
     def __init__(self):
         self.model = None
@@ -663,6 +669,41 @@ class CameraDetector:
                 for tid in stale:
                     self.face_results.pop(tid, None)
 
+    @staticmethod
+    def _expanded_crop(frame, box):
+        """Crop the upper body with padding so face_recognition gets more face pixels."""
+        x1, y1, x2, y2 = box
+        frame_h, frame_w = frame.shape[:2]
+        box_w = max(1, x2 - x1)
+        box_h = max(1, y2 - y1)
+        pad_x = int(box_w * 0.25)
+        pad_top = int(box_h * 0.12)
+        upper_h = int(box_h * 0.68)
+        cx1 = max(0, x1 - pad_x)
+        cy1 = max(0, y1 - pad_top)
+        cx2 = min(frame_w, x2 + pad_x)
+        cy2 = min(frame_h, y1 + upper_h)
+        return frame[cy1:cy2, cx1:cx2]
+
+    @staticmethod
+    def _looks_like_fall(box, frame_shape):
+        x1, y1, x2, y2 = box
+        frame_h, frame_w = frame_shape[:2]
+        box_w = max(1, x2 - x1)
+        box_h = max(1, y2 - y1)
+        aspect = box_w / float(box_h)
+        center_y = (y1 + y2) / 2.0
+        width_ratio = box_w / float(max(1, frame_w))
+        height_ratio = box_h / float(max(1, frame_h))
+        min_aspect = float(system_config.get("fall_box_aspect_ratio", 1.25))
+        return (
+            system_config.get("fall_detection_enabled", True)
+            and aspect >= min_aspect
+            and center_y > frame_h * 0.42
+            and width_ratio > 0.18
+            and height_ratio < 0.65
+        )
+
     def _face_worker(self):
         """Background thread: runs heavy face_recognition off the YOLO loop."""
         print("[FACE WORKER] Async face recognition worker started.")
@@ -707,6 +748,12 @@ class CameraDetector:
         if raw == "stranger":
             return ("Nguoi la", "stranger", (54, 51, 255))
         return ("Nguoi", "unknown", (0, 165, 255))
+
+    @staticmethod
+    def _alert_message(alert_reason):
+        if alert_reason == "fall":
+            return "CANH BAO TE NGA! Da kich hoat coi/canh bao khan cap."
+        return "CANH BAO DOT NHAP! Da kich hoat coi/canh bao khan cap."
 
     def init_camera(self):
         # 1. Try Picamera2 (Pi CSI Camera)
@@ -943,6 +990,9 @@ class CameraDetector:
         consecutive_detections = 0
         first_detect_time = None
         last_seen_time = None
+        fall_detections = 0
+        first_fall_time = None
+        last_fall_time = None
         
         prev_time = time.time()
         print("[YOLO THREAD] Async YOLO Inference loop started.")
@@ -965,6 +1015,8 @@ class CameraDetector:
             
             detected = []
             should_alarm = False
+            alert_reason = None
+            family_safe_seen = False
             
             if self.model is not None:
                 try:
@@ -1007,6 +1059,8 @@ class CameraDetector:
                         if not fr_enabled:
                             # Face recognition disabled -> behave like original default
                             label, box_type, box_color = "Nguoi la", "stranger", (54, 51, 255)
+                        elif cache_copy and cache_copy.get("raw_result") == "family":
+                            label, box_type, box_color = self._resolve_label_from_cache(cache_copy)
                         elif cache_copy and (now_loop - cache_copy["timestamp"]) < self.FACE_CACHE_VALIDITY:
                             label, box_type, box_color = self._resolve_label_from_cache(cache_copy)
                         else:
@@ -1036,8 +1090,7 @@ class CameraDetector:
                                 should_submit = True
 
                         if should_submit:
-                            crop = frame_local[max(0, y1):min(frame_local.shape[0], y2),
-                                               max(0, x1):min(frame_local.shape[1], x2)]
+                            crop = self._expanded_crop(frame_local, (x1, y1, x2, y2))
                             if crop.size > 0 and crop.shape[0] >= 80 and crop.shape[1] >= 60:
                                 try:
                                     self.face_queue.put_nowait((track_id, crop.copy(), fr_tolerance))
@@ -1048,10 +1101,18 @@ class CameraDetector:
                         # Stage 4: alarm decision (uses current config + resolved type)
                         if box_type == "stranger":
                             should_alarm = True
+                            alert_reason = "intrusion"
                         elif box_type == "family":
+                            family_safe_seen = True
                             if not system_config.get("ignore_alerts_for_family", True):
                                 should_alarm = True
+                                alert_reason = "intrusion"
                         # "pending" and "unknown" deliberately do NOT trigger alarm by themselves
+
+                        if self._looks_like_fall((x1, y1, x2, y2), frame_local.shape):
+                            label = "CANH BAO: Te nga"
+                            box_type = "fall"
+                            box_color = (0, 0, 255)
 
                         detected.append({
                             "box": (x1, y1, x2, y2),
@@ -1072,11 +1133,27 @@ class CameraDetector:
             # --- 3. FILTER / STABILIZATION / ARMED TRIGGER LOGIC ---
             detect_time = time.time()
             if system_config["system_armed"]:
-                # In simulation mode, simulate should_alarm based on target type
-                if self.mode == "simulation":
-                    # If simulating, check if mock boxes contain a stranger
-                    strangers_count = sum(1 for b in detected_boxes if b["type"] == "stranger")
-                    should_alarm = strangers_count > 0
+                fall_seen = any(isinstance(b, dict) and b.get("type") == "fall" for b in detected_boxes)
+
+                if fall_seen:
+                    last_fall_time = detect_time
+                    if first_fall_time is None:
+                        first_fall_time = detect_time
+                    fall_detections += 1
+                elif last_fall_time is not None and (detect_time - last_fall_time) >= 2.0:
+                    fall_detections = 0
+                    first_fall_time = None
+                    last_fall_time = None
+
+                fall_duration = (detect_time - first_fall_time) if first_fall_time else 0.0
+                fall_ready = (
+                    fall_detections >= 3
+                    and fall_duration >= float(system_config.get("fall_stable_seconds", 1.5))
+                )
+
+                if fall_ready:
+                    should_alarm = True
+                    alert_reason = "fall"
                     
                 if should_alarm:
                     last_seen_time = detect_time
@@ -1084,11 +1161,12 @@ class CameraDetector:
                         first_detect_time = detect_time
                     consecutive_detections += 1
                 else:
-                    # Reset if person disappears for more than 3 seconds
-                    if last_seen_time is not None and (detect_time - last_seen_time) >= 3.0:
-                        consecutive_detections = 0
-                        first_detect_time = None
-                        last_seen_time = None
+                    consecutive_detections = 0
+                    first_detect_time = None
+                    last_seen_time = None
+                    if family_safe_seen and system_config.get("ignore_alerts_for_family", True) and hw_controller.states["buzzer"]:
+                        hw_controller.set_buzzer(False)
+                        add_event("Face ID da nhan dien nguoi nha. He thong ve trang thai an toan, tat coi bao dong.", "success")
                         
                 stable_duration = (detect_time - first_detect_time) if first_detect_time else 0.0
                 
