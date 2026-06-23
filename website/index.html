@@ -330,9 +330,9 @@
           </div>
         </div>
 
-        <!-- 3 External Devices Control -->
+        <!-- External Devices and Servo Control -->
         <div class="section-header">
-          <span class="section-title">Điều khiển 3 thiết bị ngoại vi</span>
+          <span class="section-title">Điều khiển thiết bị ngoại vi & Servo</span>
           <div class="section-line"></div>
         </div>
 
@@ -390,6 +390,25 @@
             </div>
             <div class="dev-name" id="label-dev-3">Thiết bị 3</div>
             <div class="dev-status-text" id="status-dev-3">ĐANG TẮT</div>
+          </div>
+
+          <!-- Dedicated SG90 Servo -->
+          <div class="device-card" id="servo-card">
+            <div class="dev-header">
+              <div class="dev-icon-wrap" style="--dev-color: var(--yellow);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="8" />
+                  <path d="M12 4v8l5 3" />
+                </svg>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-servo" onchange="app.controlDevice('servo', this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="dev-name">Servo SG90 (GPIO 25)</div>
+            <div class="dev-status-text" id="status-servo">DONG (0&deg;)</div>
+            <div class="dev-status-text" style="color: var(--text-3);">Goc hien tai: <span id="servo-angle">0&deg;</span></div>
           </div>
         </div>
 

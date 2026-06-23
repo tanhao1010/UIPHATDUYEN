@@ -13,6 +13,7 @@ const app = {
       2: { name: "Thiết bị 2", state: false },
       3: { name: "Thiết bị 3", state: false }
     },
+    servoState: false,
     buzzerState: false,
     cpuTemp: 0.0,
     fps: 0.0,
@@ -181,6 +182,7 @@ const app = {
       this.state.devices[1] = { name: data.device_1_name, state: data.device_1_state };
       this.state.devices[2] = { name: data.device_2_name, state: data.device_2_state };
       this.state.devices[3] = { name: data.device_3_name, state: data.device_3_state };
+      this.state.servoState = data.servo_state;
       this.state.buzzerState = data.buzzer_state;
       this.state.cpuTemp = data.cpu_temp;
       
@@ -384,6 +386,19 @@ const app = {
       }
     }
 
+    // Sync the dedicated SG90 servo control: on = open 90°, off = closed 0°.
+    const switchServo = document.getElementById('switch-servo');
+    const servoStatus = document.getElementById('status-servo');
+    const servoCard = document.getElementById('servo-card');
+    const servoAngle = document.getElementById('servo-angle');
+    if (switchServo) switchServo.checked = this.state.servoState;
+    if (servoStatus) {
+      servoStatus.innerText = this.state.servoState ? 'MỞ (90°)' : 'ĐÓNG (0°)';
+      servoStatus.className = this.state.servoState ? 'dev-status-text active' : 'dev-status-text';
+    }
+    if (servoAngle) servoAngle.innerText = this.state.servoState ? '90°' : '0°';
+    if (servoCard) servoCard.classList.toggle('active', this.state.servoState);
+
     // Sync Manual Siren buzzer switch
     const switchBuz = document.getElementById('switch-buzzer');
     if (switchBuz) switchBuz.checked = this.state.buzzerState;
@@ -409,6 +424,8 @@ const app = {
       if (response.ok) {
         if (deviceId === 'buzzer') {
           this.showToast(state ? "Đã Kích Hoạt Còi Hú Cảnh Báo!" : "Đã Tắt Còi Báo Động");
+        } else if (deviceId === 'servo') {
+          this.showToast(state ? 'Servo SG90 đã mở 90°' : 'Servo SG90 đã về 0°');
         } else {
           const devName = this.state.devices[deviceId]?.name || `Thiết bị ${deviceId}`;
           this.showToast(`${state ? 'Đã bật' : 'Đã tắt'} ${devName}`);

@@ -26,7 +26,7 @@ except ImportError:
 # Hardware Pi 5 GPIO Import Handler
 GPIO_MODE = "mock"
 try:
-    from gpiozero import LED, Buzzer
+    from gpiozero import AngularServo, LED, Buzzer
     GPIO_MODE = "gpiozero"
 except ImportError:
     try:
@@ -117,6 +117,11 @@ def load_config():
                 for k, v in DEFAULT_CONFIG.items():
                     if k not in config:
                         config[k] = v
+                # Device 2 was briefly assigned to the servo. Keep it as the
+                # original GPIO 27 device now that the SG90 has its own control.
+                if config.get("device_2_name") == "Khóa Cửa Servo (SG90)":
+                    config["device_2_name"] = DEFAULT_CONFIG["device_2_name"]
+                    save_config(config)
                 return config
         except Exception as e:
             print(f"[CONFIG] Error loading config: {e}. Using defaults.")
@@ -142,19 +147,23 @@ class HardwareController:
         print(f"[HARDWARE] Initializing in '{self.mode}' mode")
         self.devices = {1: None, 2: None, 3: None}
         self.buzzer = None
+        self.servo = None
+        self.servo_pwm = None
         
         # BCM Pin mappings (Default Pi 5 setup)
         self.pins = {
             1: 17,        # Device 1: GPIO 17
             2: 27,        # Device 2: GPIO 27
             3: 22,        # Device 3: GPIO 22
-            "buzzer": 23  # Buzzer: GPIO 23
+            "buzzer": 23, # Buzzer: GPIO 23
+            "servo": 25   # Door lock servo SG90: GPIO 25
         }
         
         self.states = {
             1: False,
             2: False,
             3: False,
+            "servo": False,
             "buzzer": False
         }
         
@@ -164,10 +173,20 @@ class HardwareController:
                 self.devices[2] = LED(self.pins[2])
                 self.devices[3] = LED(self.pins[3])
                 self.buzzer = Buzzer(self.pins["buzzer"])
+                # SG90: 0 deg when off, 90 deg when the door lock is opened.
+                # The 0.5-2.5 ms pulse range covers the usual SG90 calibration range.
+                self.servo = AngularServo(
+                    self.pins["servo"],
+                    min_angle=0,
+                    max_angle=90,
+                    min_pulse_width=0.0005,
+                    max_pulse_width=0.0025,
+                )
                 # Reset all to off
                 for dev in self.devices.values():
                     dev.off()
                 self.buzzer.off()
+                self.set_servo(False)
             except Exception as e:
                 print(f"[HARDWARE] Gpiozero initialization failed: {e}. Falling back to MOCK.")
                 self.mode = "mock"
@@ -179,6 +198,9 @@ class HardwareController:
                 for dev_id, pin in self.pins.items():
                     GPIO.setup(pin, GPIO.OUT)
                     GPIO.output(pin, GPIO.LOW)
+                self.servo_pwm = GPIO.PWM(self.pins["servo"], 50)
+                self.servo_pwm.start(0)
+                self.set_servo(False)
             except Exception as e:
                 print(f"[HARDWARE] RPi.GPIO initialization failed: {e}. Falling back to MOCK.")
                 self.mode = "mock"
@@ -186,6 +208,7 @@ class HardwareController:
     def set_device(self, device_id, state):
         if device_id not in [1, 2, 3]:
             return
+
         state = bool(state)
         self.states[device_id] = state
         print(f"[HARDWARE] GPIO Control - Device {device_id} ({system_config.get(f'device_{device_id}_name')}) -> {'ON' if state else 'OFF'}")
@@ -205,6 +228,27 @@ class HardwareController:
                 GPIO.output(pin, GPIO.HIGH if state else GPIO.LOW)
             except Exception as e:
                 print(f"[HARDWARE] RPi.GPIO error on device {device_id}: {e}")
+
+    def set_servo(self, state):
+        """Move the SG90 door-lock servo to 90 deg (open) or 0 deg (closed)."""
+        state = bool(state)
+        angle = 90 if state else 0
+        self.states["servo"] = state
+        print(f"[HARDWARE] Servo SG90 GPIO {self.pins['servo']} -> {angle} degrees")
+
+        if self.mode == "gpiozero":
+            try:
+                self.servo.angle = angle
+            except Exception as e:
+                print(f"[HARDWARE] Gpiozero error on SG90 servo: {e}")
+
+        elif self.mode == "rpi_gpio":
+            try:
+                # 50 Hz PWM: 0 deg = 0.5 ms (2.5%), 90 deg = 1.5 ms (7.5%).
+                duty_cycle = 2.5 + (angle / 180.0) * 10.0
+                self.servo_pwm.ChangeDutyCycle(duty_cycle)
+            except Exception as e:
+                print(f"[HARDWARE] RPi.GPIO error on SG90 servo: {e}")
                 
     def set_buzzer(self, state):
         state = bool(state)
@@ -229,8 +273,18 @@ class HardwareController:
 
     def cleanup(self):
         print("[HARDWARE] Cleaning up GPIO connections...")
+        # Return the lock to the closed position before releasing the GPIO pin.
+        self.set_servo(False)
+        time.sleep(0.4)
+        if self.mode == "gpiozero" and self.servo is not None:
+            try:
+                self.servo.detach()
+            except Exception as e:
+                print(f"[HARDWARE] Servo detach error: {e}")
         if self.mode == "rpi_gpio":
             try:
+                if self.servo_pwm is not None:
+                    self.servo_pwm.stop()
                 GPIO.cleanup()
             except Exception as e:
                 print(f"[HARDWARE] GPIO cleanup error: {e}")
@@ -1326,6 +1380,7 @@ def api_status():
         "device_1_state": hw_controller.states[1],
         "device_2_state": hw_controller.states[2],
         "device_3_state": hw_controller.states[3],
+        "servo_state": hw_controller.states["servo"],
         "buzzer_state": hw_controller.states["buzzer"],
         "device_1_name": system_config["device_1_name"],
         "device_2_name": system_config["device_2_name"],
@@ -1345,7 +1400,7 @@ def api_status():
 @app.route('/api/control_device', methods=['POST'])
 def api_control_device():
     data = request.json or {}
-    device_id = data.get("device_id") # 1, 2, 3 or 'buzzer'
+    device_id = data.get("device_id") # 1, 2, 3, 'servo' or 'buzzer'
     state = data.get("state") # True/False
     
     if state is None or device_id is None:
@@ -1355,6 +1410,11 @@ def api_control_device():
         hw_controller.set_device(device_id, state)
         name = system_config.get(f"device_{device_id}_name")
         add_event(f"Thiết bị '{name}' được thay đổi trạng thái sang: {'BẬT' if state else 'TẮT'} thủ công.", "info")
+        return jsonify({"success": True})
+
+    elif device_id == "servo":
+        hw_controller.set_servo(state)
+        add_event(f"Servo SG90 được {'mở 90 độ' if state else 'đóng về 0 độ'} thủ công.", "info")
         return jsonify({"success": True})
         
     elif device_id == "buzzer":

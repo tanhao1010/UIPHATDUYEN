@@ -706,7 +706,7 @@ input:checked + .slider:before {
 /* ── SMART DEVICES GRID ── */
 .devices-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
   gap: 12px;
 }
 
